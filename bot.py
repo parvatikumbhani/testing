@@ -1,42 +1,42 @@
 import os
 import discord
-from discord import app_commands
 from discord.ext import commands
+from discord import app_commands
 from openai import OpenAI
 from dotenv import load_dotenv
 
 # Load .env locally (Render uses its own environment variables)
 load_dotenv()
 
-# Load environment variables
+# Environment variables
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-# Setup OpenAI client
+# OpenAI client
 client_ai = OpenAI(api_key=OPENAI_API_KEY)
 
-# Setup Discord bot
+# Discord bot setup
 intents = discord.Intents.default()
-intents.message_content = True  # allows auto-reply and message reading
+intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 
-# -----------------------------
-#  BOT READY EVENT
-# -----------------------------
+# ============================================================
+#  READY EVENT (your original logic preserved)
+# ============================================================
 @bot.event
 async def on_ready():
+    print(f"🔌 Connected as {bot.user}")
     try:
-        await bot.tree.sync()
-        print(f"✅ Logged in as {bot.user}")
+        synced = await bot.tree.sync()
+        print(f"📡 Synced {len(synced)} slash commands")
     except Exception as e:
-        print(f"Error syncing commands: {e}")
+        print(f"❌ Sync error: {e}")
 
 
-# -----------------------------
-#  SLASH COMMAND: /ask
-#  (Your original command)
-# -----------------------------
+# ============================================================
+#  ORIGINAL /ask COMMAND (your exact logic)
+# ============================================================
 @bot.tree.command(name="ask", description="Ask OpenAI a question")
 async def ask(interaction: discord.Interaction, prompt: str):
     await interaction.response.defer()
@@ -46,7 +46,6 @@ async def ask(interaction: discord.Interaction, prompt: str):
             model="gpt-4o-mini",
             messages=[{"role": "user", "content": prompt}],
         )
-
         reply = response.choices[0].message.content
         await interaction.followup.send(reply)
 
@@ -55,41 +54,40 @@ async def ask(interaction: discord.Interaction, prompt: str):
         await interaction.followup.send("❌ Something went wrong with OpenAI.")
 
 
-# -----------------------------
-#  NEW FEATURE: /ping
-# -----------------------------
-@bot.tree.command(name="ping", description="Check if the bot is alive")
-async def ping(interaction: discord.Interaction):
-    await interaction.response.send_message("🏓 Pong! I'm awake and running.")
-
-
-# -----------------------------
-#  NEW FEATURE: /help
-# -----------------------------
-@bot.tree.command(name="help_ai", description="Show all bot commands")
-async def help_ai(interaction: discord.Interaction):
+# ============================================================
+#  NEW: /info COMMAND (clean embed)
+# ============================================================
+@bot.tree.command(name="info", description="Bot information")
+async def info(interaction: discord.Interaction):
     embed = discord.Embed(
-        title="🤖 AI Bot Commands",
-        description="Here’s what I can do:",
-        color=0x5865F2
+        title="🤖 AI Discord Bot",
+        description="Powered by OpenAI and built by you.",
+        color=0x3498DB
     )
-    embed.add_field(name="/ask <prompt>", value="Ask the AI anything.", inline=False)
-    embed.add_field(name="/ping", value="Check if the bot is online.", inline=False)
-    embed.add_field(name="Mention the bot", value="I will auto‑reply using AI.", inline=False)
+    embed.add_field(name="Model", value="gpt-4o-mini", inline=False)
+    embed.add_field(name="Commands", value="/ask, /info, /ping", inline=False)
+    embed.set_footer(text="Online and ready to help")
 
     await interaction.response.send_message(embed=embed)
 
 
-# -----------------------------
-#  NEW FEATURE:
-#  Auto‑reply when mentioned
-# -----------------------------
+# ============================================================
+#  NEW: /ping COMMAND
+# ============================================================
+@bot.tree.command(name="ping", description="Check bot latency")
+async def ping(interaction: discord.Interaction):
+    latency = round(bot.latency * 1000)
+    await interaction.response.send_message(f"🏓 Pong! `{latency}ms`")
+
+
+# ============================================================
+#  NEW: AUTO-REPLY WHEN BOT IS MENTIONED
+# ============================================================
 @bot.event
 async def on_message(message):
     if message.author.bot:
         return
 
-    # If someone mentions the bot, it replies using OpenAI
     if bot.user in message.mentions:
         try:
             response = client_ai.chat.completions.create(
@@ -101,13 +99,13 @@ async def on_message(message):
 
         except Exception as e:
             print("Auto-reply error:", e)
-            await message.reply("❌ I couldn't think of a response.")
+            await message.reply("❌ I couldn't generate a response.")
 
     await bot.process_commands(message)
 
 
-# -----------------------------
+# ============================================================
 #  RUN BOT
-# -----------------------------
+# ============================================================
 if __name__ == "__main__":
     bot.run(DISCORD_TOKEN)
