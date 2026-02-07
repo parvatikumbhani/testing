@@ -33,7 +33,7 @@ async def on_ready():
     print(f"🟢 Connected as {bot.user}")
 
 # ================================================================
-# MENTION RESPONSE (AI auto-reply)
+# AUTO-REPLY WHEN MENTIONED
 # ================================================================
 @bot.event
 async def on_message(message):
@@ -60,7 +60,7 @@ async def on_message(message):
     await bot.process_commands(message)
 
 # ================================================================
-# /ask COMMAND
+# /ask COMMAND (NOW USING GROK-2)
 # ================================================================
 @bot.command()
 async def ask(ctx, *, prompt: str):
