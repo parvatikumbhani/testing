@@ -1,8 +1,8 @@
 import os
 import discord
+import requests
 from discord.ext import commands
 from dotenv import load_dotenv
-from openai import OpenAI
 
 # Load .env locally
 load_dotenv()
@@ -11,11 +11,8 @@ load_dotenv()
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 GROK_API_KEY = os.getenv("GROK_API_KEY")
 
-# Grok client (xAI)
-client_ai = OpenAI(
-    api_key=GROK_API_KEY,
-    base_url="https://api.x.ai/v1"
-)
+# Grok API endpoint
+GROK_URL = "https://api.x.ai/v1/chat/completions"
 
 # Discord bot setup
 intents = discord.Intents.default()
@@ -24,6 +21,32 @@ intents.members = True
 intents.presences = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
+
+# ================================================================
+# FUNCTION TO CALL GROK-2
+# ================================================================
+def grok_chat(user_message):
+    headers = {
+        "Authorization": f"Bearer {GROK_API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    payload = {
+        "model": "grok-2",
+        "messages": [
+            {"role": "system", "content": "You are Galaxy's AI."},
+            {"role": "user", "content": user_message}
+        ]
+    }
+
+    response = requests.post(GROK_URL, json=payload, headers=headers)
+
+    if response.status_code != 200:
+        print("Grok API error:", response.text)
+        return None
+
+    data = response.json()
+    return data["choices"][0]["message"]["content"]
 
 # ================================================================
 # READY EVENT
@@ -41,43 +64,23 @@ async def on_message(message):
         return
 
     if bot.user in message.mentions:
-        try:
-            response = client_ai.chat.completions.create(
-                model="grok-2",
-                messages=[
-                    {"role": "system", "content": "You are Galaxy's AI."},
-                    {"role": "user", "content": message.content}
-                ]
-            )
-
-            ai_reply = response.choices[0].message["content"]
-            await message.reply(ai_reply)
-
-        except Exception as e:
-            print("Grok error:", e)
+        reply = grok_chat(message.content)
+        if reply:
+            await message.reply(reply)
+        else:
             await message.reply("❌ Something went wrong with Grok.")
 
     await bot.process_commands(message)
 
 # ================================================================
-# /ask COMMAND (NOW USING GROK-2)
+# /ask COMMAND — GROK-2
 # ================================================================
 @bot.command()
 async def ask(ctx, *, prompt: str):
-    try:
-        response = client_ai.chat.completions.create(
-            model="grok-2",
-            messages=[
-                {"role": "system", "content": "You are Galaxy's AI."},
-                {"role": "user", "content": prompt}
-            ]
-        )
-
-        ai_reply = response.choices[0].message["content"]
-        await ctx.reply(ai_reply)
-
-    except Exception as e:
-        print("Grok error:", e)
+    reply = grok_chat(prompt)
+    if reply:
+        await ctx.reply(reply)
+    else:
         await ctx.reply("❌ Something went wrong with Grok.")
 
 # Run bot
