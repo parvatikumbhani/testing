@@ -9,12 +9,12 @@ load_dotenv()
 
 # Environment variables
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
-GROK_API_KEY = os.getenv("GROK_API_KEY")
+QWEN_API_KEY = os.getenv("QWEN_API_KEY")
 
-# Grok client (xAI)
+# Qwen client (Alibaba Cloud)
 client_ai = OpenAI(
-    api_key=GROK_API_KEY,
-    base_url="https://api.x.ai/v1"
+    api_key=QWEN_API_KEY,
+    base_url="https://dashscope.aliyuncs.com/compatible-mode/v1"
 )
 
 # Discord bot setup
@@ -43,7 +43,7 @@ async def on_message(message):
     if bot.user in message.mentions:
         try:
             response = client_ai.chat.completions.create(
-                model="grok-2",
+                model="qwen-max",
                 messages=[
                     {"role": "system", "content": "You are Galaxy's AI."},
                     {"role": "user", "content": message.content}
@@ -54,19 +54,19 @@ async def on_message(message):
             await message.reply(ai_reply)
 
         except Exception as e:
-            print("Grok error:", e)
-            await message.reply("❌ Something went wrong with Grok.")
+            print("Qwen error:", e)
+            await message.reply("❌ Something went wrong with Qwen.")
 
     await bot.process_commands(message)
 
 # ================================================================
-# /ask COMMAND — GROK-2
+# /ask COMMAND — QWEN
 # ================================================================
 @bot.command()
 async def ask(ctx, *, prompt: str):
     try:
         response = client_ai.chat.completions.create(
-            model="grok-2",
+            model="qwen-max",
             messages=[
                 {"role": "system", "content": "You are Galaxy's AI."},
                 {"role": "user", "content": prompt}
@@ -77,8 +77,8 @@ async def ask(ctx, *, prompt: str):
         await ctx.reply(ai_reply)
 
     except Exception as e:
-        print("Grok error:", e)
-        await ctx.reply("❌ Something went wrong with Grok.")
+        print("Qwen error:", e)
+        await ctx.reply("❌ Something went wrong with Qwen.")
 
 # Run bot
 bot.run(DISCORD_TOKEN)
