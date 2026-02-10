@@ -4,13 +4,22 @@ import requests
 from discord.ext import commands
 from dotenv import load_dotenv
 
+# -----------------------------
+# Load environment variables
+# -----------------------------
 load_dotenv()
 
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 HF_API_KEY = os.getenv("HF_API_KEY")
 
+# -----------------------------
+# HuggingFace model endpoint
+# -----------------------------
 HF_URL = "https://api-inference.huggingface.co/models/Qwen/Qwen2.5-7B-Instruct"
 
+# -----------------------------
+# THIS is the hf_chat section
+# -----------------------------
 def hf_chat(prompt):
     headers = {
         "Authorization": f"Bearer {HF_API_KEY}",
@@ -23,18 +32,27 @@ def hf_chat(prompt):
     }
 
     r = requests.post(HF_URL, json=payload, headers=headers)
+
+    print("HF STATUS:", r.status_code)
+    print("HF RAW RESPONSE:", r.text)
+
     if r.status_code != 200:
-        print("HF error:", r.text)
         return None
 
     data = r.json()
     return data[0]["generated_text"]
 
+# -----------------------------
+# Discord bot setup
+# -----------------------------
 intents = discord.Intents.default()
 intents.message_content = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
+# -----------------------------
+# Events + Commands
+# -----------------------------
 @bot.event
 async def on_ready():
     print(f"Connected as {bot.user}")
