@@ -15,7 +15,7 @@ HF_API_KEY = os.getenv("HF_API_KEY")
 # -----------------------------
 # HuggingFace model endpoint
 # -----------------------------
-HF_URL = "https://api-inference.huggingface.co/models/Qwen/Qwen2.5-7B-Instruct"
+HF_URL = "https://https://router.huggingface.co/models/Qwen/Qwen2.5-7B-Instruct"
 
 # -----------------------------
 # THIS is the hf_chat section
